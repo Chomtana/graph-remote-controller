@@ -77,9 +77,10 @@ def upgrade_allocation_internal(oldDeployment, newDeployment):
   hasOldDeployment = False
 
   for rule in rules:
-    if rule['subgraphDeployment'].lower() == oldDeployment:
+    if rule['identifier'].lower() == oldDeployment.lower():
       hasOldDeployment = True
       allocationAmount = math.ceil(int(rule['allocationAmount']['hex'], base=16) / 1e18)
+      break
 
   if hasOldDeployment:
     print('Stop indexing ' + oldDeployment)
