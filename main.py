@@ -60,7 +60,7 @@ def get_indexer_status_internal():
   if errcode:
     return {
       'error_code': errcode,
-      'err': err,
+      'err': err.decode('utf-8'),
     }
   else:
     print(out.decode('utf-8'))
