@@ -5,6 +5,7 @@ import json
 import os
 import threading
 import secret
+import math
 from pathlib import Path
 
 app = Flask(__name__)
@@ -65,6 +66,45 @@ def get_indexer_status_internal():
   else:
     print(out.decode('utf-8'))
     return json.loads(out.decode('utf-8'))
+  
+def upgrade_allocation_internal(oldDeployment, newDeployment):
+  indexer_status = get_indexer_status_internal()
+  rules = indexer_status["indexingRules"]
+
+  docker_compose = ['docker', 'compose', '-f', 'compose-all-services.yml', 'exec']
+  docker_folder = secret.DOCKER_FOLDER
+
+  hasOldDeployment = False
+
+  for rule in rules:
+    if rule['subgraphDeployment'].lower() == oldDeployment:
+      hasOldDeployment = True
+      allocationAmount = math.ceil(int(rule['allocationAmount']['hex'], base=16) / 1e18)
+
+  if hasOldDeployment:
+    print('Stop indexing ' + oldDeployment)
+    process = subprocess.Popen([*docker_compose, 'cli', 'graph', 'indexer', 'rules', 'delete', oldDeployment], cwd=docker_folder)
+    process.wait()
+    
+    print('Remove old subgraph ' + oldDeployment)
+    process = subprocess.Popen([*docker_compose, 'index-node-0', 'graphman', 'drop', oldDeployment], cwd=docker_folder)
+    process.wait()
+
+    print('Index new subgraph ' + newDeployment)
+    process = subprocess.Popen([*docker_compose, 'cli', 'graph', 'indexer', 'rules', 'set', newDeployment, 'decisionBasis', 'always', 'allocationAmount', str(allocationAmount)], cwd=docker_folder)
+    process.wait()
+  else:
+    print('Missing allocation ' + oldDeployment)
+
+@app.route('/upgrade_allocation', methods=['POST'])
+def upgrade_allocation():
+  body = request.json
+
+  upgrade_allocation_internal(body['oldDeployment'], body['newDeployment'])
+
+  return jsonify({
+    'success': True,
+  })
 
 @app.route('/indexer_status', methods=['GET'])
 def get_indexer_status():
