@@ -17,6 +17,10 @@ IS_RESTARTING = dict()
 def index():
   return 'Web App with Python Flask!'
 
+def validate_header():
+  if request.headers.get('X-SECRET') != secret.SECRET_KEY:
+    raise Exception("Forbidden")
+
 def restart_docker_compose_internal(files, docker_path):
   global IS_RESTARTING
 
@@ -118,10 +122,12 @@ def scan_upgrade_allocation_internal():
     currentHash = currentSubgraph['deployment']['ipfsHash']
 
     if subgraphHash != currentHash:
-      print(subgraphHash, currentHash)
+      upgrade_allocation_internal(subgraphHash, currentHash)
 
 @app.route('/upgrade_allocation', methods=['POST'])
 def upgrade_allocation():
+  validate_header()
+
   body = request.json
 
   upgrade_allocation_internal(body['oldDeployment'], body['newDeployment'])
@@ -132,6 +138,8 @@ def upgrade_allocation():
 
 @app.route('/scan_upgrade_allocation', methods=['POST'])
 def scan_upgrade_allocation():
+  validate_header()
+
   scan_upgrade_allocation_internal()
 
   return jsonify({
@@ -140,11 +148,14 @@ def scan_upgrade_allocation():
 
 @app.route('/indexer_status', methods=['GET'])
 def get_indexer_status():
+  validate_header()
   return get_indexer_status_internal()
 
 @app.route('/docker_compose_is_restarting/<string:docker_folder>/<string:filename>', methods=['GET'])
 def get_docker_compose_is_restarting(docker_folder, filename):
   global IS_RESTARTING
+  validate_header()
+  
   file_key = docker_folder + '/' + filename
   return jsonify({
     'is_restarting': file_key in IS_RESTARTING and IS_RESTARTING[file_key]
@@ -152,14 +163,17 @@ def get_docker_compose_is_restarting(docker_folder, filename):
 
 @app.route('/restart_docker_compose', methods=['POST'])
 def restart_docker_compose():
-  data = request.get_json()
+  validate_header()
 
+  data = request.get_json()
   restart_docker_compose_internal(data['files'], data['docker_path'])
 
   return jsonify(data)
 
 @app.route('/controller/volume_size/<string:volume_name>', methods=['GET'])
 def get_volume_size(volume_name):
+  validate_header()
+
   try:
     cmd = ['docker', 'volume', 'inspect', volume_name]
     out = subprocess.check_output(cmd)
