@@ -93,7 +93,7 @@ def upgrade_allocation_internal(oldDeployment, newDeployment):
     process.wait()
     
     print('Remove old subgraph ' + oldDeployment)
-    process = subprocess.Popen([*docker_compose, 'index-node-0', 'graphman', 'drop', oldDeployment], cwd=docker_folder)
+    process = subprocess.Popen([*docker_compose, 'index-node-0', 'graphman', 'drop', oldDeployment, '-y'], cwd=docker_folder)
     process.wait()
 
     print('Index new subgraph ' + newDeployment)
@@ -155,7 +155,7 @@ def get_indexer_status():
 def get_docker_compose_is_restarting(docker_folder, filename):
   global IS_RESTARTING
   validate_header()
-  
+
   file_key = docker_folder + '/' + filename
   return jsonify({
     'is_restarting': file_key in IS_RESTARTING and IS_RESTARTING[file_key]
