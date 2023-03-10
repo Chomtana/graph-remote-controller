@@ -47,7 +47,7 @@ def restart_docker_compose_internal(files, docker_path):
 def get_indexer_status_internal():
   global IS_RESTARTING
 
-  docker_compose = ['docker', 'compose', '-f', 'compose-all-services.json', 'exec', 'cli']
+  docker_compose = ['docker', 'compose', '-f', 'compose-all-services.yml', 'exec', 'cli']
   graph_cli_command = ['graph', 'indexer', 'status', '--output=json']
 
   docker_folder = secret.DOCKER_FOLDER
