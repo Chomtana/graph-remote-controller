@@ -93,7 +93,7 @@ def upgrade_allocation_internal(oldDeployment, newDeployment):
     process.wait()
     
     print('Remove old subgraph ' + oldDeployment)
-    process = subprocess.Popen([*docker_compose, 'index-node-0', 'graphman', 'drop', oldDeployment, '-y'], cwd=docker_folder)
+    process = subprocess.Popen([*docker_compose, 'index-node-0', 'graphman', 'drop', oldDeployment, '-f'], cwd=docker_folder)
     process.wait()
 
     print('Index new subgraph ' + newDeployment)
