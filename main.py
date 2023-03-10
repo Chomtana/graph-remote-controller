@@ -5,6 +5,7 @@ import json
 import os
 import threading
 import secret
+import subgraph
 import math
 from pathlib import Path
 
@@ -97,11 +98,41 @@ def upgrade_allocation_internal(oldDeployment, newDeployment):
   else:
     print('Missing allocation ' + oldDeployment)
 
+def scan_upgrade_allocation_internal():
+  indexer_status = get_indexer_status_internal()
+  rules = indexer_status["indexingRules"]
+
+  subgraph_deployment_ids = []
+
+  for rule in rules:
+    subgraph_deployment_ids.append(rule['identifier'])
+
+  detail = subgraph.get_subgraph_details(subgraph_deployment_ids, secret.NETWORK)
+
+  for deployment in detail:
+    subgraphHash = deployment['ipfsHash']
+    currentSubgraph = (
+      deployment['versions'][0]['subgraph']
+      ['currentVersionRelationEntity']
+    )
+    currentHash = currentSubgraph['deployment']['ipfsHash']
+
+    if subgraphHash != currentHash:
+      print(subgraphHash, currentHash)
+
 @app.route('/upgrade_allocation', methods=['POST'])
 def upgrade_allocation():
   body = request.json
 
   upgrade_allocation_internal(body['oldDeployment'], body['newDeployment'])
+
+  return jsonify({
+    'success': True,
+  })
+
+@app.route('/scan_upgrade_allocation', methods=['POST'])
+def scan_upgrade_allocation():
+  scan_upgrade_allocation_internal()
 
   return jsonify({
     'success': True,
