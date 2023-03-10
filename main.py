@@ -63,8 +63,8 @@ def get_indexer_status_internal():
       'err': err,
     }
   else:
-    print(out)
-    return json.loads(out)
+    print(out.decode('utf-8'))
+    return json.loads(out.decode('utf-8'))
 
 @app.route('/indexer_status', methods=['GET'])
 def get_indexer_status():
