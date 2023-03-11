@@ -138,6 +138,10 @@ async def scan_upgrade_allocation_internal():
     if subgraphHash != currentHash:
       hasUpgrade = hasUpgrade or (await upgrade_allocation_internal(subgraphHash, currentHash))['upgrade']
 
+  return {
+    'upgrade': hasUpgrade
+  }
+
 @app.route('/upgrade_allocation', methods=['POST'])
 async def upgrade_allocation():
   validate_header()
