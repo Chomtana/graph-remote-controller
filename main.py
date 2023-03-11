@@ -125,6 +125,8 @@ async def scan_upgrade_allocation_internal():
 
   detail = subgraph.get_subgraph_details(subgraph_deployment_ids, secret.NETWORK)
 
+  hasUpgrade = False
+
   for deployment in detail:
     subgraphHash = deployment['ipfsHash']
     currentSubgraph = (
@@ -134,7 +136,7 @@ async def scan_upgrade_allocation_internal():
     currentHash = currentSubgraph['deployment']['ipfsHash']
 
     if subgraphHash != currentHash:
-      await upgrade_allocation_internal(subgraphHash, currentHash)
+      hasUpgrade = hasUpgrade or (await upgrade_allocation_internal(subgraphHash, currentHash))['upgrade']
 
 @app.route('/upgrade_allocation', methods=['POST'])
 async def upgrade_allocation():
@@ -142,11 +144,7 @@ async def upgrade_allocation():
 
   body = request.json
 
-  await upgrade_allocation_internal(body['oldDeployment'], body['newDeployment'])
-
-  return {
-    'success': True,
-  }
+  return await upgrade_allocation_internal(body['oldDeployment'], body['newDeployment'])
 
 @app.route('/scan_upgrade_allocation', methods=['POST'])
 async def scan_upgrade_allocation():
