@@ -1,5 +1,4 @@
-from flask import Flask, request, jsonify, abort
-from waitress import serve
+from quart import Quart, request, abort
 import subprocess
 import json
 import os
@@ -8,8 +7,9 @@ import secret
 import subgraph
 import math
 from pathlib import Path
+import asyncio
 
-app = Flask(__name__)
+app = Quart(__name__)
 
 IS_RESTARTING = dict()
 
@@ -21,7 +21,7 @@ def validate_header():
   if request.headers.get('X-SECRET') != secret.SECRET_KEY:
     raise Exception("Forbidden")
 
-def restart_docker_compose_internal(files, docker_path):
+async def restart_docker_compose_internal(files, docker_path):
   global IS_RESTARTING
 
   docker_compose = ['docker', 'compose']
@@ -50,7 +50,7 @@ def restart_docker_compose_internal(files, docker_path):
     for file in restarting_files:
       IS_RESTARTING[file] = False
 
-def get_indexer_status_internal():
+async def get_indexer_status_internal():
   global IS_RESTARTING
 
   docker_compose = ['docker', 'compose', '-f', 'compose-all-services.yml', 'exec', 'cli']
@@ -72,8 +72,8 @@ def get_indexer_status_internal():
     print(out.decode('utf-8'))
     return json.loads(out.decode('utf-8'))
   
-def upgrade_allocation_internal(oldDeployment, newDeployment):
-  indexer_status = get_indexer_status_internal()
+async def upgrade_allocation_internal(oldDeployment, newDeployment):
+  indexer_status = await get_indexer_status_internal()
   rules = indexer_status["indexingRules"]
 
   docker_compose = ['docker', 'compose', '-f', 'compose-all-services.yml', 'exec']
@@ -91,10 +91,14 @@ def upgrade_allocation_internal(oldDeployment, newDeployment):
     print('Stop indexing ' + oldDeployment)
     process = subprocess.Popen([*docker_compose, 'cli', 'graph', 'indexer', 'rules', 'delete', oldDeployment], cwd=docker_folder)
     process.wait()
+
+    await asyncio.sleep(5)
     
     print('Remove old subgraph ' + oldDeployment)
     process = subprocess.Popen([*docker_compose, 'index-node-0', 'graphman', 'drop', oldDeployment, '-f'], cwd=docker_folder)
     process.wait()
+
+    await asyncio.sleep(2)
 
     print('Index new subgraph ' + newDeployment)
     process = subprocess.Popen([*docker_compose, 'cli', 'graph', 'indexer', 'rules', 'set', newDeployment, 'decisionBasis', 'always', 'allocationAmount', str(allocationAmount)], cwd=docker_folder)
@@ -102,8 +106,8 @@ def upgrade_allocation_internal(oldDeployment, newDeployment):
   else:
     print('Missing allocation ' + oldDeployment)
 
-def scan_upgrade_allocation_internal():
-  indexer_status = get_indexer_status_internal()
+async def scan_upgrade_allocation_internal():
+  indexer_status = await get_indexer_status_internal()
   rules = indexer_status["indexingRules"]
 
   subgraph_deployment_ids = []
@@ -122,56 +126,56 @@ def scan_upgrade_allocation_internal():
     currentHash = currentSubgraph['deployment']['ipfsHash']
 
     if subgraphHash != currentHash:
-      upgrade_allocation_internal(subgraphHash, currentHash)
+      await upgrade_allocation_internal(subgraphHash, currentHash)
 
 @app.route('/upgrade_allocation', methods=['POST'])
-def upgrade_allocation():
+async def upgrade_allocation():
   validate_header()
 
   body = request.json
 
-  upgrade_allocation_internal(body['oldDeployment'], body['newDeployment'])
+  await upgrade_allocation_internal(body['oldDeployment'], body['newDeployment'])
 
-  return jsonify({
+  return {
     'success': True,
-  })
+  }
 
 @app.route('/scan_upgrade_allocation', methods=['POST'])
-def scan_upgrade_allocation():
+async def scan_upgrade_allocation():
   validate_header()
 
-  scan_upgrade_allocation_internal()
+  await scan_upgrade_allocation_internal()
 
-  return jsonify({
+  return {
     'success': True,
-  })
+  }
 
 @app.route('/indexer_status', methods=['GET'])
-def get_indexer_status():
+async def get_indexer_status():
   validate_header()
-  return get_indexer_status_internal()
+  return await get_indexer_status_internal()
 
 @app.route('/docker_compose_is_restarting/<string:docker_folder>/<string:filename>', methods=['GET'])
-def get_docker_compose_is_restarting(docker_folder, filename):
+async def get_docker_compose_is_restarting(docker_folder, filename):
   global IS_RESTARTING
   validate_header()
 
   file_key = docker_folder + '/' + filename
-  return jsonify({
+  return {
     'is_restarting': file_key in IS_RESTARTING and IS_RESTARTING[file_key]
-  })
+  }
 
 @app.route('/restart_docker_compose', methods=['POST'])
-def restart_docker_compose():
+async def restart_docker_compose():
   validate_header()
 
   data = request.get_json()
-  restart_docker_compose_internal(data['files'], data['docker_path'])
+  await restart_docker_compose_internal(data['files'], data['docker_path'])
 
-  return jsonify(data)
+  return data
 
 @app.route('/controller/volume_size/<string:volume_name>', methods=['GET'])
-def get_volume_size(volume_name):
+async def get_volume_size(volume_name):
   validate_header()
 
   try:
@@ -182,15 +186,15 @@ def get_volume_size(volume_name):
     folder = Path(info[0]['Mountpoint'])
     volume_size = sum(f.stat().st_size for f in folder.glob('**/*') if f.is_file())
 
-    return jsonify({
+    return {
       # 'mount_point': info[0]['Mountpoint'],
       'volume_size': volume_size
-    })
+    }
   except:
     return abort(404)
 
 if __name__ == "__main__":
   print("Server running at port 1111")
-  serve(app, host='0.0.0.0', port=1111)
-  # app.run(host='0.0.0.0', port=1111)
+  # serve(app, host='0.0.0.0', port=1111)
+  app.run(host='0.0.0.0', port=1111, debug=True)
   
