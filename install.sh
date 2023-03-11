@@ -31,6 +31,8 @@ if ! docker compose --version; then
   docker compose version
 fi
 
+curl https://bootstrap.pypa.io/get-pip.py | sudo python3
+
 cd ~
 if [ -d "graph-remote-controller" ]
 then
