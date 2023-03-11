@@ -96,7 +96,7 @@ async def upgrade_allocation_internal(oldDeployment, newDeployment):
     
     print('Remove old subgraph ' + oldDeployment)
     process = subprocess.Popen([*docker_compose, 'index-node-0', 'graphman', 'drop', oldDeployment, '-f'], cwd=docker_folder, stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
-    process.communicate(input='y\n')
+    process.communicate(input='y\n'.encode())
 
     await asyncio.sleep(2)
 
