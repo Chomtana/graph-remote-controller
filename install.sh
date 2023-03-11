@@ -46,6 +46,8 @@ cd ~
 
 python3 -m pip install quart
 
+sudo rm /etc/systemd/system/graph-remote-controller.service
+
 echo "[Unit]
 Description=Graph Remote Allocation Controller
 Wants=network-online.target
