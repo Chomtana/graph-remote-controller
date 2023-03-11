@@ -1,9 +1,6 @@
 #!/bin/bash
 
-docker compose --version
-
-if [ $? ]
-then
+if ! docker compose --version; then
   # Run this two first
 
   sudo apt-get update
