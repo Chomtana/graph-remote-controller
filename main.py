@@ -202,5 +202,5 @@ async def get_volume_size(volume_name):
 if __name__ == "__main__":
   print("Server running at port 1111")
   # serve(app, host='0.0.0.0', port=1111)
-  app.run(host='0.0.0.0', port=1111, debug=True)
+  app.run(host='0.0.0.0', port=1111, debug=False)
   
