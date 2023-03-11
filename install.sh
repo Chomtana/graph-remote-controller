@@ -56,7 +56,7 @@ ExecStart=/usr/bin/python3 $HOME/graph-remote-controller/main.py
 WantedBy=multi-user.target" >> /etc/systemd/system/graph-remote-controller.service \
 
 sudo systemctl daemon-reload
-sudo systemctl start graph-remote-controller
+sudo systemctl restart graph-remote-controller
 sudo systemctl enable graph-remote-controller
 
 sudo ufw allow 1111
