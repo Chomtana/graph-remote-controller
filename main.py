@@ -103,8 +103,16 @@ async def upgrade_allocation_internal(oldDeployment, newDeployment):
     print('Index new subgraph ' + newDeployment)
     process = subprocess.Popen([*docker_compose, 'cli', 'graph', 'indexer', 'rules', 'set', newDeployment, 'decisionBasis', 'always', 'allocationAmount', str(allocationAmount)], cwd=docker_folder)
     process.wait()
+
+    return {
+      'upgrade': True
+    }
   else:
     print('Missing allocation ' + oldDeployment)
+
+    return {
+      'upgrade': False
+    }
 
 async def scan_upgrade_allocation_internal():
   indexer_status = await get_indexer_status_internal()
@@ -144,11 +152,7 @@ async def upgrade_allocation():
 async def scan_upgrade_allocation():
   validate_header()
 
-  await scan_upgrade_allocation_internal()
-
-  return {
-    'success': True,
-  }
+  return await scan_upgrade_allocation_internal()
 
 @app.route('/indexer_status', methods=['GET'])
 async def get_indexer_status():
