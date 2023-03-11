@@ -36,10 +36,13 @@ curl https://bootstrap.pypa.io/get-pip.py | sudo python3
 cd ~
 if [ -d "graph-remote-controller" ]
 then
+  cd graph-remote-controller
   git pull
 else
   git clone https://github.com/Chomtana/graph-remote-controller
 fi
+
+cd ~
 
 python3 -m pip install quart
 
