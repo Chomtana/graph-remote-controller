@@ -62,7 +62,11 @@ echo
 echo "=========================================="
 echo
 
-graphsecret=$(echo $RANDOM | md5sum | head -c 20; echo;)
+if [[ -f graph-remote-controller/secret.py ]]; then
+  graphsecret=$(cat graph-remote-controller/secret.py | grep -oP SECRET_KEY='(.*)' | cut -d '=' -f 2 | tr -d "'")
+else
+  graphsecret=$(echo $RANDOM | md5sum | head -c 20; echo;)
+fi
 
 sudo systemctl stop graph-remote-controller
 
