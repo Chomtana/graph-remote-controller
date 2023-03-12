@@ -46,6 +46,17 @@ cd ~
 
 python3 -m pip install quart
 
+if [[ -f graph-remote-controller/secret.py ]]; then
+  echo
+  echo "=========================================="
+  echo
+
+  echo -n "Found old configuration, override? (y/n)"
+  read -r overridesecret
+
+  if [[ $overridesecret != "y" ]]; then goto :setup-systemd; fi
+fi
+
 echo
 echo "=========================================="
 echo "Please answer these questions"
@@ -75,6 +86,8 @@ DOCKER_FOLDER='$dockerfolder'
 SECRET_KEY='$graphsecret'
 NETWORK='$graphnetwork'
 " > graph-remote-controller/secret.py
+
+:setup-systemd
 
 sudo rm /etc/systemd/system/graph-remote-controller.service
 
