@@ -92,5 +92,9 @@ sudo systemctl enable graph-remote-controller
 
 sudo ufw allow 1111
 
+echo
+echo "=========================================="
+echo
+
 echo "Please send the following secret to monitoring core:"
 echo $graphsecret
