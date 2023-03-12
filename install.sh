@@ -51,43 +51,44 @@ if [[ -f graph-remote-controller/secret.py ]]; then
   echo "=========================================="
   echo
 
-  echo -n "Found old configuration, override? (y/n)"
+  echo -n "Found old configuration, override? (y/n): "
   read -r overridesecret
-
-  if [[ $overridesecret != "y" ]]; then goto :setup-systemd; fi
-fi
-
-echo
-echo "=========================================="
-echo "Please answer these questions"
-echo "=========================================="
-echo
-
-echo -n "Docker folder (/root/graphprotocol-mainnet-docker): "
-read -r dockerfolder
-
-echo -n "Network (mainnet): "
-read -r graphnetwork
-
-echo
-echo "=========================================="
-echo
-
-if [[ -f graph-remote-controller/secret.py ]]; then
-  graphsecret=$(cat graph-remote-controller/secret.py | grep -oP SECRET_KEY='(.*)' | cut -d '=' -f 2 | tr -d "'")
 else
-  graphsecret=$(echo $RANDOM | md5sum | head -c 20; echo;)
+  overridesecret="y"
 fi
 
-sudo systemctl stop graph-remote-controller
+if [[ $overridesecret == "y" ]]
+then
+  echo
+  echo "=========================================="
+  echo "Please answer these questions"
+  echo "=========================================="
+  echo
 
-echo "
-DOCKER_FOLDER='$dockerfolder'
-SECRET_KEY='$graphsecret'
-NETWORK='$graphnetwork'
-" > graph-remote-controller/secret.py
+  echo -n "Docker folder (/root/graphprotocol-mainnet-docker): "
+  read -r dockerfolder
 
-:setup-systemd
+  echo -n "Network (mainnet): "
+  read -r graphnetwork
+
+  echo
+  echo "=========================================="
+  echo
+
+  if [[ -f graph-remote-controller/secret.py ]]; then
+    graphsecret=$(cat graph-remote-controller/secret.py | grep -oP SECRET_KEY='(.*)' | cut -d '=' -f 2 | tr -d "'")
+  else
+    graphsecret=$(echo $RANDOM | md5sum | head -c 20; echo;)
+  fi
+
+  sudo systemctl stop graph-remote-controller
+
+  echo "
+  DOCKER_FOLDER='$dockerfolder'
+  SECRET_KEY='$graphsecret'
+  NETWORK='$graphnetwork'
+  " > graph-remote-controller/secret.py
+fi
 
 sudo rm /etc/systemd/system/graph-remote-controller.service
 
