@@ -98,3 +98,5 @@ echo
 
 echo "Please send the following secret to monitoring core:"
 echo $graphsecret
+
+echo
