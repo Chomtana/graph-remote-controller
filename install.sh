@@ -64,6 +64,8 @@ echo
 
 graphsecret=$(echo $RANDOM | md5sum | head -c 20; echo;)
 
+sudo systemctl stop graph-remote-controller
+
 echo "
 DOCKER_FOLDER='$dockerfolder'
 SECRET_KEY='$graphsecret'
