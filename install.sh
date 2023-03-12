@@ -46,11 +46,21 @@ cd ~
 
 python3 -m pip install quart
 
+echo
+echo "=========================================="
+echo "Please answer these questions"
+echo "=========================================="
+echo
+
 echo -n "Docker folder (/root/graphprotocol-mainnet-docker): "
 read -r dockerfolder
 
 echo -n "Network (mainnet): "
 read -r graphnetwork
+
+echo
+echo "=========================================="
+echo
 
 graphsecret=$(echo $RANDOM | md5sum | head -c 20; echo;)
 
