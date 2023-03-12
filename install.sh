@@ -57,6 +57,12 @@ else
   overridesecret="y"
 fi
 
+if [[ -f graph-remote-controller/secret.py ]]; then
+  graphsecret=$(cat graph-remote-controller/secret.py | grep -oP SECRET_KEY='(.*)' | cut -d '=' -f 2 | tr -d "'")
+else
+  graphsecret=$(echo $RANDOM | md5sum | head -c 20; echo;)
+fi
+
 if [[ $overridesecret == "y" ]]
 then
   echo
@@ -75,18 +81,12 @@ then
   echo "=========================================="
   echo
 
-  if [[ -f graph-remote-controller/secret.py ]]; then
-    graphsecret=$(cat graph-remote-controller/secret.py | grep -oP SECRET_KEY='(.*)' | cut -d '=' -f 2 | tr -d "'")
-  else
-    graphsecret=$(echo $RANDOM | md5sum | head -c 20; echo;)
-  fi
-
   sudo systemctl stop graph-remote-controller
 
   echo "
-  DOCKER_FOLDER='$dockerfolder'
-  SECRET_KEY='$graphsecret'
-  NETWORK='$graphnetwork'
+DOCKER_FOLDER='$dockerfolder'
+SECRET_KEY='$graphsecret'
+NETWORK='$graphnetwork'
   " > graph-remote-controller/secret.py
 fi
 
