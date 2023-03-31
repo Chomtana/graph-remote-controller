@@ -46,6 +46,50 @@ cd ~
 
 python3 -m pip install quart
 
+if [[ -f graph-remote-controller/secret.py ]]; then
+  echo
+  echo "=========================================="
+  echo
+
+  echo -n "Found old configuration, override? (y/n): "
+  read -r overridesecret
+else
+  overridesecret="y"
+fi
+
+if [[ -f graph-remote-controller/secret.py ]]; then
+  graphsecret=$(cat graph-remote-controller/secret.py | grep -oP SECRET_KEY='(.*)' | cut -d '=' -f 2 | tr -d "'")
+else
+  graphsecret=$(echo $RANDOM | md5sum | head -c 20; echo;)
+fi
+
+if [[ $overridesecret == "y" ]]
+then
+  echo
+  echo "=========================================="
+  echo "Please answer these questions"
+  echo "=========================================="
+  echo
+
+  echo -n "Docker folder (/root/graphprotocol-mainnet-docker): "
+  read -r dockerfolder
+
+  echo -n "Network (mainnet): "
+  read -r graphnetwork
+
+  echo
+  echo "=========================================="
+  echo
+
+  sudo systemctl stop graph-remote-controller
+
+  echo "
+DOCKER_FOLDER='$dockerfolder'
+SECRET_KEY='$graphsecret'
+NETWORK='$graphnetwork'
+  " > graph-remote-controller/secret.py
+fi
+
 sudo rm /etc/systemd/system/graph-remote-controller.service
 
 echo "[Unit]
@@ -60,10 +104,19 @@ Restart=always
 RestartSec=5
 ExecStart=/usr/bin/python3 $HOME/graph-remote-controller/main.py
 [Install]
-WantedBy=multi-user.target" >> /etc/systemd/system/graph-remote-controller.service \
+WantedBy=multi-user.target" > /etc/systemd/system/graph-remote-controller.service \
 
 sudo systemctl daemon-reload
 sudo systemctl restart graph-remote-controller
 sudo systemctl enable graph-remote-controller
 
 sudo ufw allow 1111
+
+echo
+echo "=========================================="
+echo
+
+echo "Please send the following secret to monitoring core:"
+echo $graphsecret
+
+echo
