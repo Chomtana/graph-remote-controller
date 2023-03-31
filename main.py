@@ -92,13 +92,13 @@ async def upgrade_allocation_internal(oldDeployment, newDeployment):
     process = subprocess.Popen([*docker_compose, 'cli', 'graph', 'indexer', 'rules', 'delete', oldDeployment], cwd=docker_folder)
     process.wait()
 
-    await asyncio.sleep(5)
+    await asyncio.sleep(120)
     
-    print('Remove old subgraph ' + oldDeployment)
-    process = subprocess.Popen([*docker_compose, 'index-node-0', 'graphman', 'drop', oldDeployment, '-f'], cwd=docker_folder, stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
-    process.communicate(input='y\n'.encode())
+    # print('Remove old subgraph ' + oldDeployment)
+    # process = subprocess.Popen([*docker_compose, 'index-node-0', 'graphman', 'drop', oldDeployment, '-f'], cwd=docker_folder, stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
+    # process.communicate(input='y\n'.encode())
 
-    await asyncio.sleep(2)
+    # await asyncio.sleep(2)
 
     print('Index new subgraph ' + newDeployment)
     process = subprocess.Popen([*docker_compose, 'cli', 'graph', 'indexer', 'rules', 'set', newDeployment, 'decisionBasis', 'always', 'allocationAmount', str(allocationAmount)], cwd=docker_folder)
